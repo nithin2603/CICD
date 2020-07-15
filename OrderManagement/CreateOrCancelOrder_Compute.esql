@@ -17,7 +17,7 @@ CREATE COMPUTE MODULE CreateOrCancelOrder_Compute
 		DECLARE rEnv REFERENCE TO Environment.variables;
 		SET rEnv.items = CARDINALITY(inRef.createorder.items.*[]);
 		SET OutputRoot.JSON.Data = InputRoot.XMLNSC;
-		-- outputroot to be fetched form input --
+		---outputroot to be fetched form input ---
 		
 		-- Checking the mobike number length--
 		-- Checking the processing order--
