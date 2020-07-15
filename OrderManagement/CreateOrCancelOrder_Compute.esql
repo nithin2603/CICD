@@ -1,0 +1,102 @@
+
+
+CREATE COMPUTE MODULE CreateOrCancelOrder_Compute
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		--CALL CopyMessageHeaders();
+		--CALL CopyEntireMessage();
+		
+		DECLARE inRef REFERENCE TO InputRoot.XMLNSC.order;
+		CREATE LASTCHILD OF OutputRoot.XMLNSC DOMAIN('XMLNSC') NAME 'order'  ;
+		DECLARE outRef REFERENCE TO OutputRoot.XMLNSC.order;
+		
+		DECLARE createOrder BOOLEAN EXISTS(InputRoot.XMLNSC.order.createorder[]);
+		DECLARE cancelOrder BOOLEAN EXISTS(InputRoot.XMLNSC.order.cancelorder[]);
+		
+		CREATE FIELD Environment.variables;
+		DECLARE rEnv REFERENCE TO Environment.variables;
+		SET rEnv.items = CARDINALITY(inRef.createorder.items.*[]);
+		SET OutputRoot.JSON.Data = InputRoot.XMLNSC;
+		--- outputroot to be fetched form input ---
+		
+		-- Checking the mobike number length--
+		-- Checking the processing order--
+		
+		IF createOrder = TRUE THEN
+			
+			SET outRef.createdorder.fullname = inRef.createorder.firstname||' '||inRef.createorder.lastname;
+			IF LENGTH(inRef.createorder.mobileno)=10 THEN
+				SET outRef.createdorder.mobileno = inRef.createorder.mobileno;
+			ELSEIF LENGTH(inRef.createorder.mobileno)>10 THEN
+				SET outRef.mobileno = 'Invalid mobileno'; 
+			ELSEIF LENGTH(inRef.createorder.mobileno)<10 THEN
+				SET outRef.mobileno = 'Invalid mobileno';					
+			END IF;
+			SET outRef.createdorder.ordercreateddate = inRef.createorder.date;
+			SET outRef.createdorder.billedaddress.area = inRef.createorder.billingaddress.street||' '||inRef.createorder.billingaddress.addressline1||' '||inRef.createorder.billingaddress.addressline2;
+			SET outRef.createdorder.billedaddress.city = inRef.createorder.billingaddress.city;
+			SET outRef.createdorder.billedaddress.state= inRef.createorder.billingaddress.state;
+			
+			DECLARE count INTEGER 1;
+			DECLARE ItemCount INTEGER CARDINALITY(inRef.createorder.items.*[]);
+			
+			WHILE ItemCount>0 DO
+				
+				SET outRef.createdorder.items.item[count].itemid = inRef.createorder.items.item[count].itemid;
+				SET outRef.createdorder.items.item[count].itemname = inRef.createorder.items.item[count].itemname;
+				SET outRef.createdorder.items.item[count].quantity = inRef.createorder.items.item[count].quantity;
+				
+				SET count=count+1;
+				SET ItemCount=ItemCount-1;
+								
+			END WHILE;
+			
+			DECLARE cost INTEGER;
+			
+			CALL calculation(inRef,rEnv.items,cost);
+			
+			SET outRef.createdorder.ordercost = cost;
+			
+			SET outRef.orderStatus = 'ORDER CREATED SUCCESSFULLY';
+			
+		ELSEIF cancelOrder = TRUE THEN
+			
+			SET outRef.cancelledorder.orderstatus = 'OrderID-'||inRef.cancelorder.orderid||' '||'has been cancelled successfully';
+			SET outRef.cancelledorder.reason = inRef.cancelorder.reason;
+			SET outRef.cancelledorder.date = inRef.cancelorder.date;
+			
+			IF UPPER(inRef.cancelorder.refund) = 'YES' THEN
+				SET outRef.cancelledorder.refundstatus = 'Your refund will be processed shortly';			
+			ELSEIF UPPER(inRef.cancelorder.refund) = 'NO' THEN
+				IF UPPER(inRef.cancelorder.replacement) = 'YES' THEN
+					SET outRef.cancelledorder.replacementstatus = 'Request for replacement received';
+				ELSE
+					SET outRef.cancelledorder.cancellationtype = 'Select either replacement or refund';
+				END IF;			
+			END IF;	
+		ELSE
+			set outRef.ordertype = 'Invalid Order Type';
+		
+		END IF;
+		
+		RETURN TRUE;
+	END;
+	
+	CREATE PROCEDURE calculation(IN input REFERENCE,IN ItemCount INTEGER,OUT sum INTEGER)
+	BEGIN
+		DECLARE total INTEGER 0;
+		DECLARE index INTEGER 1;
+		
+		WHILE ItemCount>0 DO
+			
+			SET total=total+CAST(input.createorder.items.item[index].price AS INTEGER);
+			SET ItemCount = ItemCount-1;
+			SET index = index+1;						
+			
+		END WHILE;
+		SET sum = total;	
+		
+	END;
+
+	
+END MODULE;
