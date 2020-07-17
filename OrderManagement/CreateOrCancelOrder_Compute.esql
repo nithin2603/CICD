@@ -20,7 +20,7 @@ CREATE COMPUTE MODULE CreateOrCancelOrder_Compute
 		---outputroot to be fetched form input --
 		
 		-- Checking the mobike number length--
-		-- Checking the processing order--
+		-- Checking the processing order----
 		
 		IF createOrder = TRUE THEN
 			
