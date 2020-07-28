@@ -5,7 +5,8 @@ CREATE COMPUTE MODULE GetOrderDetails_Compute
 	BEGIN
 		-- CALL CopyMessageHeaders();
 		-- CALL CopyEntireMessage();
-		SET OutputRoot.JSON.Data = InputRoot.XMLNSC;
+		
+		SET OutputRoot.JSON.Data=InputRoot.XMLNSC;
 		RETURN TRUE;
 	END;
 
