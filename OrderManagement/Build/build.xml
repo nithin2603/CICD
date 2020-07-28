@@ -21,10 +21,16 @@
 			<arg value="${properties}" />
 		</exec>
 		<echo message="Bar Overriden..." />
-		<echo message="Deploying bar" />
+		<echo message="Deploying bar to ${iib.broker}" />
 		<exec executable="deploycmd.bat">
 			<arg value="${iib.broker}" />
 			<arg value="${iib.server}" />
+			<arg value="${bar.name}" />
+		</exec>
+		<echo message="Deploying bar to ${iib.broker2}" />
+		<exec executable="deploycmd.bat">
+			<arg value="${iib.broker2}" />
+			<arg value="${iib.server2}" />
 			<arg value="${bar.name}" />
 		</exec>
 		<echo message="Bar file deployed..." />
